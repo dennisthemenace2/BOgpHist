@@ -98,11 +98,10 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
     
     
     start = proc.time()
-    utmat = Utility_Max(100,X_trans,GP,ymin,lower,upper,datatransform = datatransform,px=px,kappa = kappa, eps = eps,acq=acq) ##maybe more than 10
+    utmat = Utility_Max(X_trans,GP,ymin,lower,upper,datatransform = datatransform,px=px,kappa = kappa, eps = eps,acq=acq) ##maybe more than 10
     end = proc.time()
     print('time for optimizing acq function:')
     print(end-start)
-    
     
     ###this is time consuming and only used for illustration
     if(PLOT & ndim==1){
@@ -114,8 +113,8 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
         truePointsY = c(truePointsY,getY(truePointsX[k]))
       }
       
-      plot(truePointsX,truePointsY,type='l',col='black',xlab='x', ylab='y')#,ylim=c(-100 ,100) )
-      points(X,Y,type='o',lty=0)
+      plot(truePointsX,truePointsY,type='l',col='black',xlab='x', ylab='y',lwd=2)#,ylim=c(-100 ,100) )
+      points(X,Y,type='o',lty=0,cex=2)
       
       title(i)
       predPoints = matrix(seq(lower,upper,0.1))
@@ -128,12 +127,12 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
       }
       ##plot stuff  
       preds = gpHistPredict(GP=GP,X=X_trans,x_pred = x_pred_trans)
-      lines(predPoints,preds,col='red')
+      lines(predPoints,preds,col='red',lwd=2)
       vars =  gpHistVariance(GP=GP,X=X_trans,x_pred = x_pred_trans)
       vars = abs(vars)
       
-      lines(predPoints,preds-sqrt(vars),col='red',lty=2 )
-      lines(predPoints,preds+sqrt(vars),col='red',lty=2 )
+      lines(predPoints,preds-sqrt(vars),col='red',lty=2 ,lwd=2)
+      lines(predPoints,preds+sqrt(vars),col='red',lty=2 ,lwd=2)
       
       
       eivals = c()
@@ -147,7 +146,7 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
         lines(predPoints,eivals,col='blue')
       }
      
-      ###plot sampled points 
+      ###plot next point to evaluate
       for( w in 1:nrow(utmat)){
         points(utmat[w,1],utmat[w,2],pch='+',col='black')
       }
@@ -224,37 +223,18 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
 
     start = proc.time()
     
-    for( w in 1:nrow(utmat)){
-      idx= which.min(utmat[,ndim+1])
-      ei_value = utmat[idx,ndim+1]
-      if(length(idx)<=0){
-        print('error')
-        stop()
-      }
       ##querry points
-      newX = matrix(utmat[idx,1:ndim],nrow=1)
+    newX = matrix(utmat[1,1:ndim],nrow=1)
       
-      rowcheck  <- function(df1, df2){
+    rowcheck  <- function(df1, df2){
         xx <- apply(df1, 1, paste, collapse = "")
         yy <- apply(df2, 1, paste, collapse = "")
         zz <- xx %in% yy
         return(zz)
-      }
-      xidx = rowcheck(X,newX)
-      
-      
-      if(any(xidx) ){
-        utmat[idx,] =Inf
-        idx = -1
-        next
-      }else{
-        idx = 1 ##just set to value for next check
-        break;
-      }
-      
     }
-    
-    if(idx<0){
+    xidx = rowcheck(X,newX)
+      
+    if(any(xidx) ){
       print('no new point') #we can update now or leave
       # it is debatable if the hyper-parameters should be estimated again.
       next;
@@ -356,7 +336,7 @@ Utility <- function(x_vec, X,GP,y_max, acq = "ucb", kappa, eps,datatransform=NUL
 }
 
 ###try to find next value...
-Utility_Max <- function(npoints, X,GP,  y_max,lower=0,upper=1,acq=  "ucb", datatransform=NULL,px=NULL,kappa= 2.576, eps=0.0) {
+Utility_Max <- function(X,GP,  y_max,lower=0,upper=1,acq=  "ucb", datatransform=NULL,px=NULL,kappa= 2.576, eps=0.0) {
   ndim = ncol(X)
   if(length(lower)==1){
     if(ndim>1){
