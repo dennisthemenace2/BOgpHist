@@ -221,8 +221,6 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
     # this is tedious, because we make sure that this point is not already known.
     # this is debatable if this can or should still happen, it is certainly time consuming
 
-    start = proc.time()
-    
       ##querry points
     newX = matrix(utmat[1,1:ndim],nrow=1)
       
@@ -239,10 +237,6 @@ BOgpHist =function(getY,npoints,ndim,lower,upper,paramLower,paramUpper,datatrans
       # it is debatable if the hyper-parameters should be estimated again.
       next;
     }
-    
-    end = proc.time()
-    print('time to select next sample point:')
-    print(end-start)
     
     newX = matrix(newX,nrow=1)
     newY = getY(newX ) ###get real Y
